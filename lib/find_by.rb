@@ -1,22 +1,29 @@
-
-#using the meta programming concepts created a find_by_name and find_by_value methods
+require_relative 'errors'
+ 
 class Module
-
-	def find_by_namebrand
-		name_brand_hash = {:brand => "brand", :name => "name"} #hash for attributes
-    	name_brand_hash.each do |k, v|
-      		find_by = %Q{
-        		def find_by_#{k}(arg)
-        		data = Product.all 
-          		data.each do |product_arr|
-            		if #{v} == arg
-              			return Product.new(id: product_arr[0], brand: product_arr[1], name: product_arr[2], price: product_arr[3].to_f)
-            		end
-          		end
-        	end
-      		}
-      		class_eval(find_by) 
-    	end
-  	end
-  	find_by_namebrand
-	end
+  def method_missing(method_name, *args, &block)
+    name = method_name.to_s.downcase
+     if(match_data = /^find_by_()(\w*?)?$/.match name)
+      create_finder_methods match_data[2]
+      send(method_name, *args)
+    else
+      super(method_name, *args)
+    end
+  end
+  def create_finder_methods(*attributes)
+    attributes.each do |attr|
+      attr_name = attr.to_s
+      method_name = "find_by_#{attr_name}"
+      method = %Q{
+        def #{method_name}(identifier)
+          product=self.all.select{ |product| product.#{attr_name}.to_s == identifier.to_s}
+          return product[0]
+        end
+      }
+      self.instance_eval(method)
+    end
+  end
+  def respond_to_missing?(method_name, include_private = false)
+    method_name.to_s.start_with?('find_by_') || super
+  end
+end

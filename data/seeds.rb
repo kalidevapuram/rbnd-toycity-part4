@@ -3,6 +3,8 @@ require 'faker'
 # This file contains code that populates the database with
 # fake data for testing purposes
 def db_seed
+
+# Product.create
   
   data_path = File.dirname(__FILE__) + "/data.csv"
       CSV.open(data_path, "ab") do |csv|
